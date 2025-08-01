@@ -5,6 +5,7 @@ using System.ClientModel;
 using System.ClientModel.Primitives;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -168,14 +169,14 @@ public partial class ChatClient
         Argument.AssertNotNullOrEmpty(messages, nameof(messages));
 
         options ??= new();
-        CreateChatCompletionOptions(messages, ref options);
+        
         using OpenTelemetryScope scope = _telemetry.StartChatScope(options);
 
         try
         {
-            using BinaryContent content = options.ToBinaryContent();
+            BinaryContent content = CreateCompleteChatContent(messages, options);
             ClientResult result = CompleteChat(content, cancellationToken.ToRequestOptions());
-            ChatCompletion chatCompletion = ChatCompletion.FromClientResult(result);
+            ChatCompletion chatCompletion = CreateChatCompletion(result);
 
             scope?.RecordChatCompletion(chatCompletion);
             return ClientResult.FromValue(chatCompletion, result.GetRawResponse());
@@ -346,4 +347,18 @@ public partial class ChatClient
             options.StreamOptions = null;
         }
     }
+
+    protected virtual BinaryContent CreateCompleteChatContent(IEnumerable<ChatMessage> messages, ChatCompletionOptions options, bool stream = false)
+    {
+        CreateChatCompletionOptions(messages, ref options, stream);
+        return options.ToBinaryContent();
+    }
+
+    protected virtual ChatCompletion CreateChatCompletion(ClientResult result)
+    {
+        ChatCompletion chatCompletion = ChatCompletion.FromClientResult(result);
+        return chatCompletion;
+    }
+
+    protected Uri Endpoint => _endpoint;
 }
