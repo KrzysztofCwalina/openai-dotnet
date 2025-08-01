@@ -24,7 +24,7 @@ public class VirtualMessageCreationVisitor : ScmLibraryVisitor
             MethodSignature newSignature = new(
                 method.Signature.Name,
                 method.Signature.Description,
-                method.Signature.Modifiers | MethodSignatureModifiers.Virtual,
+                method.Signature.Modifiers | MethodSignatureModifiers.Virtual | MethodSignatureModifiers.Protected,
                 method.Signature.ReturnType,
                 method.Signature.ReturnDescription,
                 method.Signature.Parameters,
